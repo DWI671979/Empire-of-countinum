@@ -1,5 +1,3 @@
-from sqlite3 import Cursor
-from tkinter import _Cursor
 
 from database.database import get_connection
 
@@ -32,23 +30,19 @@ def create_story(
     category,
     content
 ):
-    """
-    Submit a story for moderation.
-    """
 
     conn = get_connection()
-
     cursor = conn.cursor()
 
     cursor.execute("""
-        INSERT INTO stories (
-            title,
-            author_id,
-            category,
-            content,
-            status
-        )
-        VALUES (?, ?, ?, ?, ?)
+    INSERT INTO stories (
+        title,
+        author_id,
+        category,
+        content,
+        status
+    )
+    VALUES (?, ?, ?, ?, ?)
     """,
     (
         title,
@@ -59,6 +53,23 @@ def create_story(
     ))
 
     story_id = cursor.lastrowid
+
+    try:
+        cursor.execute("""
+        INSERT INTO moderation_queue (
+            content_type,
+            content_id,
+            submitted_by
+        )
+        VALUES (?, ?, ?)
+        """,
+        (
+            "story",
+            story_id,
+            author_id
+        ))
+    except Exception:
+        pass
 
     conn.commit()
     conn.close()
@@ -74,22 +85,22 @@ def get_story(story_id):
 
     conn = get_connection()
 
-    story = conn.execute("""
-        SELECT
-            s.*,
-            u.username AS author_name
-        FROM stories s
-        LEFT JOIN users u
-            ON s.author_id = u.id
-        WHERE s.id = ?
+    row = conn.execute("""
+    SELECT
+        s.*,
+        u.username AS author_name
+    FROM stories s
+    LEFT JOIN users u
+        ON s.author_id = u.id
+    WHERE s.id = ?
     """,
     (story_id,)
     ).fetchone()
 
     conn.close()
 
-    if story:
-        return dict(story)
+    if row:
+        return dict(row)
 
     return None
 
@@ -108,12 +119,12 @@ def update_story(
     conn = get_connection()
 
     conn.execute("""
-        UPDATE stories
-        SET
-            title = ?,
-            category = ?,
-            content = ?
-        WHERE id = ?
+    UPDATE stories
+    SET
+        title=?,
+        category=?,
+        content=?
+    WHERE id=?
     """,
     (
         title,
@@ -136,9 +147,63 @@ def delete_story(story_id):
 
     conn = get_connection()
 
+    conn.execute(
+        "DELETE FROM stories WHERE id=?",
+        (story_id,)
+    )
+
+    try:
+        conn.execute(
+            "DELETE FROM story_likes WHERE story_id=?",
+            (story_id,)
+        )
+    except Exception:
+        pass
+
+    try:
+        conn.execute(
+            "DELETE FROM story_comments WHERE story_id=?",
+            (story_id,)
+        )
+    except Exception:
+        pass
+
+    conn.commit()
+    conn.close()
+
+    return True
+
+
+# =====================================================
+# APPROVAL
+# =====================================================
+
+def approve_story(story_id):
+
+    conn = get_connection()
+
     conn.execute("""
-        DELETE FROM stories
-        WHERE id = ?
+    UPDATE stories
+    SET status='approved'
+    WHERE id=?
+    """,
+    (story_id,)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return True
+
+
+def reject_story(story_id):
+
+    conn = get_connection()
+
+    conn.execute("""
+    UPDATE stories
+    SET status='rejected'
+    WHERE id=?
     """,
     (story_id,)
     )
@@ -150,43 +215,7 @@ def delete_story(story_id):
 
 
 # =====================================================
-# PUBLISH / MODERATION
-# =====================================================
-
-def approve_story(story_id):
-
-    conn = get_connection()
-
-    conn.execute("""
-        UPDATE stories
-        SET status = 'approved'
-        WHERE id = ?
-    """,
-    (story_id,)
-    )
-
-    conn.commit()
-    conn.close()
-
-
-def reject_story(story_id):
-
-    conn = get_connection()
-
-    conn.execute("""
-        UPDATE stories
-        SET status = 'rejected'
-        WHERE id = ?
-    """,
-    (story_id,)
-    )
-
-    conn.commit()
-    conn.close()
-
-
-# =====================================================
-# LIST STORIES
+# STORY LISTS
 # =====================================================
 
 def get_approved_stories(limit=100):
@@ -194,20 +223,15 @@ def get_approved_stories(limit=100):
     conn = get_connection()
 
     rows = conn.execute("""
-        SELECT
-            s.id,
-            s.title,
-            s.category,
-            s.views,
-            s.likes,
-            s.created_at,
-            u.username AS author_name
-        FROM stories s
-        LEFT JOIN users u
-            ON s.author_id = u.id
-        WHERE s.status = 'approved'
-        ORDER BY s.id DESC
-        LIMIT ?
+    SELECT
+        s.*,
+        u.username AS author_name
+    FROM stories s
+    LEFT JOIN users u
+        ON s.author_id=u.id
+    WHERE s.status='approved'
+    ORDER BY s.id DESC
+    LIMIT ?
     """,
     (limit,)
     ).fetchall()
@@ -217,24 +241,20 @@ def get_approved_stories(limit=100):
     return rows
 
 
-
 def get_pending_stories(limit=100):
 
     conn = get_connection()
 
     rows = conn.execute("""
-        SELECT
-            s.id,
-            s.title,
-            s.category,
-            s.created_at,
-            u.username AS author_name
-        FROM stories s
-        LEFT JOIN users u
-            ON s.author_id = u.id
-        WHERE s.status = 'pending'
-        ORDER BY s.id DESC
-        LIMIT ?
+    SELECT
+        s.*,
+        u.username AS author_name
+    FROM stories s
+    LEFT JOIN users u
+        ON s.author_id=u.id
+    WHERE s.status='pending'
+    ORDER BY s.id DESC
+    LIMIT ?
     """,
     (limit,)
     ).fetchall()
@@ -252,11 +272,11 @@ def get_user_stories(
     conn = get_connection()
 
     rows = conn.execute("""
-        SELECT *
-        FROM stories
-        WHERE author_id = ?
-        ORDER BY id DESC
-        LIMIT ?
+    SELECT *
+    FROM stories
+    WHERE author_id=?
+    ORDER BY id DESC
+    LIMIT ?
     """,
     (
         user_id,
@@ -283,24 +303,20 @@ def search_stories(
     if category and category != "All":
 
         rows = conn.execute("""
-            SELECT
-                s.id,
-                s.title,
-                s.category,
-                s.likes,
-                s.views,
-                u.username AS author_name
-            FROM stories s
-            LEFT JOIN users u
-                ON s.author_id = u.id
-            WHERE
-                s.status='approved'
-                AND s.category=?
-                AND (
-                    s.title LIKE ?
-                    OR s.content LIKE ?
-                )
-            ORDER BY s.id DESC
+        SELECT
+            s.*,
+            u.username AS author_name
+        FROM stories s
+        LEFT JOIN users u
+            ON s.author_id=u.id
+        WHERE
+            s.status='approved'
+            AND s.category=?
+            AND (
+                s.title LIKE ?
+                OR s.content LIKE ?
+            )
+        ORDER BY s.id DESC
         """,
         (
             category,
@@ -312,23 +328,19 @@ def search_stories(
     else:
 
         rows = conn.execute("""
-            SELECT
-                s.id,
-                s.title,
-                s.category,
-                s.likes,
-                s.views,
-                u.username AS author_name
-            FROM stories s
-            LEFT JOIN users u
-                ON s.author_id = u.id
-            WHERE
-                s.status='approved'
-                AND (
-                    s.title LIKE ?
-                    OR s.content LIKE ?
-                )
-            ORDER BY s.id DESC
+        SELECT
+            s.*,
+            u.username AS author_name
+        FROM stories s
+        LEFT JOIN users u
+            ON s.author_id=u.id
+        WHERE
+            s.status='approved'
+            AND (
+                s.title LIKE ?
+                OR s.content LIKE ?
+            )
+        ORDER BY s.id DESC
         """,
         (
             f"%{search_term}%",
@@ -342,30 +354,24 @@ def search_stories(
 
 
 # =====================================================
-# FILTERS
+# CATEGORY FILTER
 # =====================================================
 
-def get_stories_by_category(
-    category
-):
+def get_stories_by_category(category):
 
     conn = get_connection()
 
     rows = conn.execute("""
-        SELECT
-            s.id,
-            s.title,
-            s.category,
-            s.views,
-            s.likes,
-            u.username AS author_name
-        FROM stories s
-        LEFT JOIN users u
-            ON s.author_id = u.id
-        WHERE
-            s.status='approved'
-            AND s.category=?
-        ORDER BY s.id DESC
+    SELECT
+        s.*,
+        u.username AS author_name
+    FROM stories s
+    LEFT JOIN users u
+        ON s.author_id=u.id
+    WHERE
+        s.status='approved'
+        AND s.category=?
+    ORDER BY s.id DESC
     """,
     (category,)
     ).fetchall()
@@ -379,22 +385,136 @@ def get_stories_by_category(
 # VIEWS
 # =====================================================
 
-def increment_story_view(
-    story_id
-):
+def increment_story_view(story_id):
 
     conn = get_connection()
 
     conn.execute("""
-        UPDATE stories
-        SET views = views + 1
-        WHERE id = ?
+    UPDATE stories
+    SET views = COALESCE(views,0) + 1
+    WHERE id=?
     """,
     (story_id,)
     )
 
     conn.commit()
     conn.close()
+
+
+# =====================================================
+# LIKES
+# =====================================================
+
+def like_story(
+    user_id,
+    story_id
+):
+
+    conn = get_connection()
+
+    try:
+
+        existing = conn.execute("""
+        SELECT id
+        FROM story_likes
+        WHERE user_id=?
+        AND story_id=?
+        """,
+        (
+            user_id,
+            story_id
+        )
+        ).fetchone()
+
+        if existing:
+            conn.close()
+            return False
+
+        conn.execute("""
+        INSERT INTO story_likes(
+            user_id,
+            story_id
+        )
+        VALUES (?, ?)
+        """,
+        (
+            user_id,
+            story_id
+        )
+        )
+
+        conn.execute("""
+        UPDATE stories
+        SET likes = COALESCE(likes,0) + 1
+        WHERE id=?
+        """,
+        (story_id,)
+        )
+
+        conn.commit()
+
+    except Exception:
+        conn.close()
+        return False
+
+    conn.close()
+
+    return True
+
+
+# =====================================================
+# COMMENTS
+# =====================================================
+
+def add_story_comment(
+    story_id,
+    user_id,
+    comment
+):
+
+    conn = get_connection()
+
+    conn.execute("""
+    INSERT INTO story_comments(
+        story_id,
+        user_id,
+        comment
+    )
+    VALUES (?, ?, ?)
+    """,
+    (
+        story_id,
+        user_id,
+        comment
+    )
+    )
+
+    conn.commit()
+    conn.close()
+
+    return True
+
+
+def get_story_comments(story_id):
+
+    conn = get_connection()
+
+    rows = conn.execute("""
+    SELECT
+        c.*,
+        u.username
+    FROM story_comments c
+    LEFT JOIN users u
+        ON c.user_id=u.id
+    WHERE c.story_id=?
+    ORDER BY c.id DESC
+    """,
+    (story_id,)
+    ).fetchall()
+
+    conn.close()
+
+    return rows
 
 
 # =====================================================
@@ -408,31 +528,13 @@ def bookmark_story(
 
     conn = get_connection()
 
-    existing = conn.execute("""
-        SELECT id
-        FROM bookmarks
-        WHERE
-            user_id=?
-            AND content_type='story'
-            AND content_id=?
-    """,
-    (
-        user_id,
-        story_id
-    )
-    ).fetchone()
-
-    if existing:
-        conn.close()
-        return False
-
     conn.execute("""
-        INSERT INTO bookmarks(
-            user_id,
-            content_type,
-            content_id
-        )
-        VALUES (?, ?, ?)
+    INSERT INTO bookmarks(
+        user_id,
+        content_type,
+        content_id
+    )
+    VALUES (?, ?, ?)
     """,
     (
         user_id,
@@ -447,141 +549,6 @@ def bookmark_story(
     return True
 
 
-def remove_bookmark(
-    user_id,
-    story_id
-):
-
-    conn = get_connection()
-
-    conn.execute("""
-        DELETE FROM bookmarks
-        WHERE
-            user_id=?
-            AND content_type='story'
-            AND content_id=?
-    """,
-    (
-        user_id,
-        story_id
-    )
-    )
-
-    conn.commit()
-    conn.close()
-
-    return True
-
-
-# =====================================================
-# LIKES
-# =====================================================
-
-def like_story(
-    user_id,
-    story_id
-):
-    """
-    Simple implementation.
-    Prevents duplicate likes.
-    """
-
-    conn = get_connection()
-
-    existing = conn.execute("""
-        SELECT id
-        FROM story_likes
-        WHERE user_id=?
-        AND story_id=?
-    """,
-    (
-        user_id,
-        story_id
-    )
-    ).fetchone()
-
-    if existing:
-        conn.close()
-        return False
-
-    conn.execute("""
-        INSERT INTO story_likes(
-            user_id,
-            story_id
-        )
-        VALUES (?, ?)
-    """,
-    (
-        user_id,
-        story_id
-    )
-    )
-
-    conn.execute("""
-        UPDATE stories
-        SET likes = likes + 1
-        WHERE id = ?
-    """,
-    (story_id,)
-    )
-_Cursor.execute("""
-INSERT INTO moderation_queue (
-    content_type,
-    content_id,
-    submitted_by
-)
-VALUES (?, ?, ?)
-""",
-(
-    "story",
-    story_id,
-    author_id
-))
-Cursor.execute("""
-INSERT INTO moderation_queue (
-    content_type,
-    content_id,
-    submitted_by
-)
-VALUES (?, ?, ?)
-""",
-(
-    "story",
-    story_id,
-    author_id
-)
-cursor.execute("""
-INSERT INTO moderation_queue (
-    content_type,
-    content_id,
-    submitted_by
-)
-VALUES (?, ?, ?)
-""",
-(
-    "story",
-    story_id,
-    author_id
-)
-cursor.execute("""
-INSERT INTO moderation_queue (
-    content_type,
-    content_id,
-    submitted_by
-)
-VALUES (?, ?, ?)
-""",
-(
-    "story",
-    story_id,
-    author_id
-)
-    conn.commit()
-    conn.close()
-
-    return True
-
-
 # =====================================================
 # STATISTICS
 # =====================================================
@@ -590,47 +557,27 @@ def get_story_statistics():
 
     conn = get_connection()
 
-    total_stories = conn.execute("""
-        SELECT COUNT(*) AS total
-        FROM stories
-    """).fetchone()["total"]
+    total_stories = conn.execute(
+        "SELECT COUNT(*) AS total FROM stories"
+    ).fetchone()["total"]
 
-    approved_stories = conn.execute("""
-        SELECT COUNT(*) AS total
-        FROM stories
-        WHERE status='approved'
-    """).fetchone()["total"]
+    approved_stories = conn.execute(
+        "SELECT COUNT(*) AS total FROM stories WHERE status='approved'"
+    ).fetchone()["total"]
 
-    pending_stories = conn.execute("""
-        SELECT COUNT(*) AS total
-        FROM stories
-        WHERE status='pending'
-    """).fetchone()["total"]
+    pending_stories = conn.execute(
+        "SELECT COUNT(*) AS total FROM stories WHERE status='pending'"
+    ).fetchone()["total"]
 
     total_views = conn.execute("""
-        SELECT COALESCE(SUM(views),0)
-        AS total
-        FROM stories
+    SELECT COALESCE(SUM(views),0) AS total
+    FROM stories
     """).fetchone()["total"]
 
     total_likes = conn.execute("""
-        SELECT COALESCE(SUM(likes),0)
-        AS total
-        FROM stories
+    SELECT COALESCE(SUM(likes),0) AS total
+    FROM stories
     """).fetchone()["total"]
-cursor.execute("""
-INSERT INTO moderation_queue (
-    content_type,
-    content_id,
-    submitted_by
-)
-VALUES (?, ?, ?)
-""",
-(
-    "story",
-    story_id,
-    author_id
-))
 
     conn.close()
 
@@ -647,25 +594,20 @@ VALUES (?, ?, ?)
 # FEATURED STORIES
 # =====================================================
 
-def get_most_liked_stories(
-    limit=10
-):
+def get_most_liked_stories(limit=10):
 
     conn = get_connection()
 
     rows = conn.execute("""
-        SELECT
-            s.id,
-            s.title,
-            s.likes,
-            s.views,
-            u.username AS author_name
-        FROM stories s
-        LEFT JOIN users u
-            ON s.author_id=u.id
-        WHERE s.status='approved'
-        ORDER BY s.likes DESC
-        LIMIT ?
+    SELECT
+        s.*,
+        u.username AS author_name
+    FROM stories s
+    LEFT JOIN users u
+        ON s.author_id=u.id
+    WHERE s.status='approved'
+    ORDER BY likes DESC
+    LIMIT ?
     """,
     (limit,)
     ).fetchall()
@@ -675,25 +617,20 @@ def get_most_liked_stories(
     return rows
 
 
-def get_most_viewed_stories(
-    limit=10
-):
+def get_most_viewed_stories(limit=10):
 
     conn = get_connection()
 
     rows = conn.execute("""
-        SELECT
-            s.id,
-            s.title,
-            s.likes,
-            s.views,
-            u.username AS author_name
-        FROM stories s
-        LEFT JOIN users u
-            ON s.author_id=u.id
-        WHERE s.status='approved'
-        ORDER BY s.views DESC
-        LIMIT ?
+    SELECT
+        s.*,
+        u.username AS author_name
+    FROM stories s
+    LEFT JOIN users u
+        ON s.author_id=u.id
+    WHERE s.status='approved'
+    ORDER BY views DESC
+    LIMIT ?
     """,
     (limit,)
     ).fetchall()
@@ -701,3 +638,4 @@ def get_most_viewed_stories(
     conn.close()
 
     return rows
+

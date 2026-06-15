@@ -1,7 +1,8 @@
+
 from database.database import get_connection
 
 
-def initialize_database():
+def create_tables():
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -16,9 +17,7 @@ def initialize_database():
         username TEXT UNIQUE NOT NULL,
         email TEXT UNIQUE NOT NULL,
         password_hash TEXT NOT NULL,
-        role TEXT DEFAULT 'member',
-        bio TEXT DEFAULT '',
-        avatar TEXT DEFAULT '',
+        role TEXT DEFAULT 'user',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
@@ -32,12 +31,10 @@ def initialize_database():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER UNIQUE,
         display_name TEXT,
-        tagline TEXT,
-        location TEXT,
-        website TEXT,
-        portfolio TEXT,
         bio TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        avatar_path TEXT,
+        website TEXT,
+        social_links TEXT,
         FOREIGN KEY(user_id) REFERENCES users(id)
     )
     """)
@@ -51,8 +48,8 @@ def initialize_database():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
         author_id INTEGER NOT NULL,
-        category TEXT,
-        content TEXT,
+        category TEXT NOT NULL,
+        content TEXT NOT NULL,
         status TEXT DEFAULT 'pending',
         views INTEGER DEFAULT 0,
         likes INTEGER DEFAULT 0,
@@ -71,9 +68,7 @@ def initialize_database():
         user_id INTEGER NOT NULL,
         story_id INTEGER NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(user_id, story_id),
-        FOREIGN KEY(user_id) REFERENCES users(id),
-        FOREIGN KEY(story_id) REFERENCES stories(id)
+        UNIQUE(user_id, story_id)
     )
     """)
 
@@ -87,9 +82,7 @@ def initialize_database():
         story_id INTEGER NOT NULL,
         user_id INTEGER NOT NULL,
         comment TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(story_id) REFERENCES stories(id),
-        FOREIGN KEY(user_id) REFERENCES users(id)
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
 
@@ -102,28 +95,13 @@ def initialize_database():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
         artist_id INTEGER NOT NULL,
-        image_path TEXT NOT NULL,
-        likes INTEGER DEFAULT 0,
-        views INTEGER DEFAULT 0,
+        description TEXT,
+        image_path TEXT,
         status TEXT DEFAULT 'pending',
+        views INTEGER DEFAULT 0,
+        likes INTEGER DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(artist_id) REFERENCES users(id)
-    )
-    """)
-
-    # =====================================================
-    # ARTWORK LIKES
-    # =====================================================
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS artwork_likes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        artwork_id INTEGER NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(user_id, artwork_id),
-        FOREIGN KEY(user_id) REFERENCES users(id),
-        FOREIGN KEY(artwork_id) REFERENCES artworks(id)
     )
     """)
 
@@ -137,153 +115,25 @@ def initialize_database():
         artwork_id INTEGER NOT NULL,
         user_id INTEGER NOT NULL,
         comment TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(artwork_id) REFERENCES artworks(id),
-        FOREIGN KEY(user_id) REFERENCES users(id)
-    )
-    """)
-
-    # =====================================================
-    # FOLLOWERS
-    # =====================================================
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS followers (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        follower_id INTEGER NOT NULL,
-        following_id INTEGER NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
 
     # =====================================================
-    # BOOKMARKS
-    # =====================================================
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS bookmarks (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        content_type TEXT NOT NULL,
-        content_id INTEGER NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(user_id, content_type, content_id)
-    )
-    """)
-
-    # =====================================================
-    # NOTIFICATIONS
-    # =====================================================
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS notifications (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        title TEXT,
-        message TEXT,
-        read_status INTEGER DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-
-    # =====================================================
-    # MODERATION QUEUE
-    # =====================================================
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS moderation_queue (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        content_type TEXT NOT NULL,
-        content_id INTEGER NOT NULL,
-        submitted_by INTEGER,
-        status TEXT DEFAULT 'pending',
-        moderator_notes TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        reviewed_at TIMESTAMP
-    )
-    """)
-
-    # =====================================================
-    # COPYRIGHT CLAIMS
-    # =====================================================
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS copyright_claims (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        claimant_id INTEGER,
-        content_type TEXT,
-        content_id INTEGER,
-        ownership_statement TEXT,
-        evidence_path TEXT,
-        status TEXT DEFAULT 'pending',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-
-    # =====================================================
-    # COLLABORATION PROJECTS
-    # =====================================================
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS collaboration_projects (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        creator_id INTEGER NOT NULL,
-        category TEXT,
-        description TEXT,
-        recruitment_open INTEGER DEFAULT 1,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(creator_id) REFERENCES users(id)
-    )
-    """)
-
-    # =====================================================
-    # PROJECT MEMBERS
-    # =====================================================
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS project_members (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        project_id INTEGER NOT NULL,
-        user_id INTEGER NOT NULL,
-        role TEXT DEFAULT 'Contributor',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(project_id) REFERENCES collaboration_projects(id),
-        FOREIGN KEY(user_id) REFERENCES users(id)
-    )
-    """)
-
-    # =====================================================
-    # PROJECT JOIN REQUESTS
-    # =====================================================
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS project_join_requests (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        project_id INTEGER NOT NULL,
-        user_id INTEGER NOT NULL,
-        message TEXT,
-        status TEXT DEFAULT 'pending',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(project_id) REFERENCES collaboration_projects(id),
-        FOREIGN KEY(user_id) REFERENCES users(id)
-    )
-    """)
-
-    # =====================================================
-    # CONTINUITY WIKI ARTICLES
+    # WIKI ARTICLES
     # =====================================================
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS wiki_articles (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
-        article_type TEXT,
-        content TEXT,
-        author_id INTEGER,
+        article_type TEXT NOT NULL,
+        content TEXT NOT NULL,
+        author_id INTEGER NOT NULL,
         canon_status TEXT DEFAULT 'non-canon',
         views INTEGER DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(author_id) REFERENCES users(id)
     )
     """)
 
@@ -304,32 +154,113 @@ def initialize_database():
     """)
 
     # =====================================================
-    # CONTACT MESSAGES
+    # BOOKMARKS
     # =====================================================
 
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS contact_messages (
+    CREATE TABLE IF NOT EXISTS bookmarks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        sender_id INTEGER,
-        subject TEXT,
-        message TEXT,
+        user_id INTEGER NOT NULL,
+        content_type TEXT NOT NULL,
+        content_id INTEGER NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    # =====================================================
+    # COLLABORATION PROJECTS
+    # =====================================================
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS collaboration_projects (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        description TEXT,
+        owner_id INTEGER NOT NULL,
         status TEXT DEFAULT 'open',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
 
     # =====================================================
-    # CONTINUITY TEAM MEMBERS
+    # PROJECT MEMBERS
     # =====================================================
 
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS continuity_team (
+    CREATE TABLE IF NOT EXISTS project_members (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER UNIQUE,
-        position TEXT,
+        project_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        role TEXT DEFAULT 'member'
+    )
+    """)
+
+    # =====================================================
+    # COPYRIGHT CLAIMS
+    # =====================================================
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS copyright_claims (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        claimant_id INTEGER NOT NULL,
+        content_type TEXT NOT NULL,
+        content_id INTEGER NOT NULL,
+        ownership_statement TEXT NOT NULL,
+        evidence_path TEXT,
+        status TEXT DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    # =====================================================
+    # CONTACT / SUPPORT
+    # =====================================================
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS contact_messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        sender_id INTEGER NOT NULL,
+        subject TEXT NOT NULL,
+        message TEXT NOT NULL,
+        status TEXT DEFAULT 'open',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    # =====================================================
+    # MODERATION QUEUE
+    # =====================================================
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS moderation_queue (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        content_type TEXT NOT NULL,
+        content_id INTEGER NOT NULL,
+        submitted_by INTEGER NOT NULL,
+        status TEXT DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    # =====================================================
+    # SITE ANNOUNCEMENTS
+    # =====================================================
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS announcements (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        created_by INTEGER,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
 
     conn.commit()
     conn.close()
+
+
+if __name__ == "__main__":
+    create_tables()
+    print("Empire of Continuum database schema created successfully.")
+
