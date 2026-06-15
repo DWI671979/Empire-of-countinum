@@ -1,0 +1,24 @@
+{
+    "featured_story": {
+        "title": "The Fall of the Crimson Dynasty",
+        "author": "Empire Staff",
+        "description": "A legendary tale chronicling the collapse of an ancient empire."
+    },
+
+    "featured_artwork": {
+        "title": "The Golden Citadel",
+        "artist": "Empire Studio",
+        "description": "Concept artwork depicting the capital city of the Continuum."
+    },
+
+    "featured_creator": {
+        "name": "First Creator",
+        "role": "Worldbuilder",
+        "bio": "An early contributor helping shape the Empire of Continuum."
+    },
+
+    "latest_canon_event": {
+        "title": "Age of Convergence Begins",
+        "description": "The first official era of the Continuum timeline."
+    }
+}

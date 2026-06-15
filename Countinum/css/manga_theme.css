@@ -1,0 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap');
+
+html,
+body,
+[class*="css"] {
+    font-family: 'Cinzel', serif;
+}
+
+.stApp {
+    background-color: #0A0A0A;
+    color: #F5F5F5;
+}
+
+.main-title {
+    color: #D4AF37;
+    text-align: center;
+    font-size: 3rem;
+    font-weight: 700;
+    letter-spacing: 4px;
+}
+
+.subtitle {
+    color: #8B0000;
+    text-align: center;
+    font-size: 1.2rem;
+}
+
+.manga-card {
+    border: 2px solid #D4AF37;
+    padding: 20px;
+    border-radius: 10px;
+    background-color: #111111;
+    margin-bottom: 15px;
+    transition: 0.3s;
+}
+
+.manga-card:hover {
+    box-shadow: 0 0 20px rgba(212,175,55,0.5);
+}
+
+.gold-divider {
+    border-top: 2px solid #D4AF37;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.creator-panel {
+    border-left: 5px solid #8B0000;
+    padding-left: 15px;
+}
