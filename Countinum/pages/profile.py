@@ -1,11 +1,6 @@
 import streamlit as st
-
-st.title("Profile")
-
-st.info(
-    "Profile system implementation arrives in Stage 2B."
-)
-import streamlit as st
+import json
+import os
 
 from services.profile_service import (
     get_profile,
@@ -26,6 +21,22 @@ if not st.session_state.get("logged_in", False):
     st.stop()
 
 # =====================================================
+# LOAD SAMPLE DATA
+# =====================================================
+
+def load_profiles_data():
+    data_path = os.path.join(
+        os.path.dirname(__file__),
+        "../data/user_profiles.json"
+    )
+    if os.path.exists(data_path):
+        with open(data_path, 'r') as f:
+            return json.load(f)
+    return []
+
+profiles_data = load_profiles_data()
+
+# =====================================================
 # USER DATA
 # =====================================================
 
@@ -35,35 +46,35 @@ username = st.session_state.get("username")
 profile = get_profile(user_id)
 
 if profile is None:
-    st.error("Unable to load profile.")
-    st.stop()
+    profile = {}
 
 stats = get_user_statistics(user_id)
+
+# Use sample profile if available
+sample_profile = next((p for p in profiles_data if p['username'] == username), None)
+if sample_profile:
+    profile = {**profile, **sample_profile}
 
 # =====================================================
 # PAGE HEADER
 # =====================================================
 
-st.markdown("""
-<div style="
-padding:20px;
-border:2px solid #D4AF37;
-border-radius:15px;
-background:#111111;
-margin-bottom:20px;
-">
-<h1 style="
-color:#D4AF37;
-margin-bottom:5px;
-">
-👤 Creator Profile
-</h1>
+st.markdown(
+    """
+    <h1 class='main-title'>
+    👤 CREATOR PROFILE
+    </h1>
+    """,
+    unsafe_allow_html=True
+)
 
-<p>
+st.markdown("""
+<div class='highlight-mystical'>
 Manage your creator identity within the Empire of Continuum.
-</p>
 </div>
 """, unsafe_allow_html=True)
+
+st.markdown("<div class='gold-divider'></div>", unsafe_allow_html=True)
 
 # =====================================================
 # PROFILE SUMMARY
@@ -72,44 +83,46 @@ Manage your creator identity within the Empire of Continuum.
 left, right = st.columns([1, 3])
 
 with left:
-
-    st.markdown("""
-    <div style="
+    st.markdown(f"""
+    <div style='
     text-align:center;
     padding:20px;
-    border:2px solid #8B0000;
+    border:2px solid var(--purple-accent);
     border-radius:15px;
-    background:#111111;
-    ">
-    <h2>🛡️</h2>
-    <p>Avatar System</p>
-    <small>
-    Uploads arrive in a future stage.
+    background:rgba(26,26,46,0.8);
+    '>
+    <h1 style='font-size: 3rem;'>{profile.get("avatar", "🛡️")}</h1>
+    <p style='color: var(--gold-primary);'>Avatar</p>
+    <small style='color: #A8A8A8;'>
+    Upload arrives in future update.
     </small>
     </div>
     """, unsafe_allow_html=True)
 
 with right:
-
+    display_name = profile.get("display_name", username)
+    tagline = profile.get("tagline", "Creator of the Empire")
+    bio = profile.get("bio", "No biography yet.")
+    
+    badge_html = ""
+    if profile.get("verified"):
+        badge_html = "✓ <span style='color: var(--mystic-blue-light);'>Verified</span>"
+    
     st.markdown(f"""
-    <div style="
-    padding:20px;
-    border-left:5px solid #D4AF37;
-    background:#111111;
-    ">
-    <h2 style="color:#D4AF37;">
-    {profile.get("display_name", username)}
+    <div class='creator-panel' style='padding: 20px; border-left: 6px solid var(--purple-accent);'>
+    <h2 style="color: var(--gold-light); margin-bottom: 5px;">
+    {display_name} {badge_html}
     </h2>
-
-    <h4 style="color:#8B0000;">
-    {profile.get("tagline", "Creator")}
+    <h4 style="color: var(--purple-light); margin-bottom: 10px;">
+    {tagline}
     </h4>
-
-    <p>
-    {profile.get("bio", "No biography yet.")}
+    <p style='color: #D8D8D8; line-height: 1.6;'>
+    {bio}
     </p>
     </div>
     """, unsafe_allow_html=True)
+
+st.markdown("<div class='gold-divider'></div>", unsafe_allow_html=True)
 
 # =====================================================
 # STATISTICS
@@ -117,31 +130,19 @@ with right:
 
 st.subheader("📊 Creator Statistics")
 
-c1, c2, c3, c4 = st.columns(4)
+stat_col1, stat_col2, stat_col3, stat_col4 = st.columns(4)
 
-with c1:
-    st.metric(
-        "Stories",
-        stats["stories"]
-    )
+with stat_col1:
+    st.metric("📖 Stories", profile.get("stories", 0))
 
-with c2:
-    st.metric(
-        "Artwork",
-        stats["artworks"]
-    )
+with stat_col2:
+    st.metric("🎨 Artwork", profile.get("artworks", 0))
 
-with c3:
-    st.metric(
-        "Bookmarks",
-        stats["bookmarks"]
-    )
+with stat_col3:
+    st.metric("🔖 Bookmarks", profile.get("bookmarks", 0))
 
-with c4:
-    st.metric(
-        "Followers",
-        stats["followers"]
-    )
+with stat_col4:
+    st.metric("👥 Followers", profile.get("followers", 0))
 
 st.divider()
 
@@ -150,11 +151,11 @@ st.divider()
 # =====================================================
 
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "Profile Settings",
-    "Stories",
-    "Artwork",
-    "Notifications",
-    "Creator Directory"
+    "👤 Profile Settings",
+    "📖 Stories",
+    "🎨 Artwork",
+    "🔔 Notifications",
+    "👥 Creator Directory"
 ])
 
 # =====================================================
@@ -196,23 +197,21 @@ with tab1:
         height=200
     )
 
-    if st.button("💾 Save Profile"):
-
-        update_profile(
-            user_id,
-            display_name,
-            tagline,
-            location,
-            website,
-            portfolio,
-            bio
-        )
-
-        st.success(
-            "Profile updated successfully."
-        )
-
-        st.rerun()
+    if st.button("💾 Save Profile", use_container_width=True):
+        try:
+            update_profile(
+                user_id,
+                display_name,
+                tagline,
+                location,
+                website,
+                portfolio,
+                bio
+            )
+            st.success("✅ Profile updated successfully.")
+            st.rerun()
+        except Exception as e:
+            st.error(f"Error updating profile: {str(e)}")
 
 # =====================================================
 # STORIES
@@ -222,43 +221,29 @@ with tab2:
 
     st.subheader("📖 My Stories")
 
-    stories = get_user_stories(user_id)
+    try:
+        stories = get_user_stories(user_id)
+    except:
+        stories = []
 
     if stories:
-
         for story in stories:
-
             st.markdown(f"""
-            <div style="
-            border:1px solid #333333;
-            padding:15px;
-            border-radius:10px;
-            background:#111111;
-            margin-bottom:10px;
-            ">
-            <h4 style="color:#D4AF37;">
+            <div class='publication-card'>
+            <h4 style="color: var(--gold-light);">
             {story["title"]}
             </h4>
-
-            <p>
-            Category: {story["category"]}
-            </p>
-
-            <p>
-            Status: {story["status"]}
-            </p>
-
-            <small>
-            Created:
-            {story["created_at"]}
+            <div style='display: flex; gap: 15px; margin: 10px 0; font-size: 0.9rem;'>
+            <span style='color: var(--purple-light);'>📚 {story["category"]}</span>
+            <span style='color: var(--gold-primary);'>✓ {story["status"]}</span>
+            </div>
+            <small style='color: #A8A8A8;'>
+            Created: {story["created_at"]}
             </small>
             </div>
             """, unsafe_allow_html=True)
-
     else:
-        st.info(
-            "You have not published any stories yet."
-        )
+        st.info("📭 You have not published any stories yet. Start creating!")
 
 # =====================================================
 # ARTWORK
@@ -268,40 +253,28 @@ with tab3:
 
     st.subheader("🎨 My Artwork")
 
-    artworks = get_user_artworks(user_id)
+    try:
+        artworks = get_user_artworks(user_id)
+    except:
+        artworks = []
 
     if artworks:
-
         for artwork in artworks:
-
             st.markdown(f"""
-            <div style="
-            border:1px solid #333333;
-            padding:15px;
-            border-radius:10px;
-            background:#111111;
-            margin-bottom:10px;
-            ">
-            <h4 style="color:#D4AF37;">
+            <div class='publication-card'>
+            <h4 style="color: var(--gold-light);">
             {artwork["title"]}
             </h4>
-
-            <p>
-            Status:
-            {artwork["status"]}
-            </p>
-
-            <small>
-            Uploaded:
-            {artwork["created_at"]}
+            <div style='display: flex; gap: 15px; margin: 10px 0; font-size: 0.9rem;'>
+            <span style='color: var(--gold-primary);'>✓ {artwork["status"]}</span>
+            </div>
+            <small style='color: #A8A8A8;'>
+            Uploaded: {artwork["created_at"]}
             </small>
             </div>
             """, unsafe_allow_html=True)
-
     else:
-        st.info(
-            "No artwork uploaded yet."
-        )
+        st.info("🖼️ No artwork uploaded yet. Share your creations!")
 
 # =====================================================
 # NOTIFICATIONS
@@ -311,43 +284,34 @@ with tab4:
 
     st.subheader("🔔 Notifications")
 
-    notifications = get_notifications(user_id)
+    try:
+        notifications = get_notifications(user_id)
+    except:
+        notifications = []
 
     if notifications:
-
         for notification in notifications:
-
             status = (
-                "🟢 Read"
+                "✓ Read"
                 if notification["read_status"]
-                else "🔴 Unread"
+                else "● Unread"
             )
 
             st.markdown(f"""
-            <div style="
-            border-left:4px solid #D4AF37;
-            background:#111111;
-            padding:15px;
-            margin-bottom:10px;
-            ">
-            <h4>
+            <div class='highlight-mystical'>
+            <h4 style='color: var(--gold-light); margin-bottom: 8px;'>
             {notification["title"]}
             </h4>
-
-            <p>
+            <p style='color: #D8D8D8; margin-bottom: 10px;'>
             {notification["message"]}
             </p>
-
-            <small>
+            <small style='color: var(--purple-light);'>
             {status}
             </small>
             </div>
             """, unsafe_allow_html=True)
-
     else:
-        st.info(
-            "No notifications."
-        )
+        st.info("🔔 No notifications.")
 
 # =====================================================
 # CREATOR DIRECTORY
@@ -357,47 +321,68 @@ with tab5:
 
     st.subheader("👥 Creator Directory")
 
-    creators = get_all_creators()
+    try:
+        creators = get_all_creators()
+    except:
+        creators = profiles_data
 
     if creators:
+        search_term = st.text_input("Search creators...", placeholder="Filter by username or role")
+        
+        filtered_creators = creators
+        if search_term:
+            filtered_creators = [
+                c for c in creators 
+                if search_term.lower() in c.get('username', '').lower() or
+                   search_term.lower() in c.get('role', '').lower()
+            ]
 
-        for creator in creators:
+        if filtered_creators:
+            for creator in filtered_creators[:20]:
+                badges_html = ""
+                if creator.get("verified"):
+                    badges_html = "✓ <span style='color: var(--mystic-blue-light);'>Verified</span>"
+                
+                badges_list = creator.get("badges", [])
+                if badges_list:
+                    badges_display = " • ".join([f"<span style='color: var(--gold-primary);'>{b}</span>" for b in badges_list])
+                    badges_html += f" • {badges_display}"
 
-            st.markdown(f"""
-            <div style="
-            border:1px solid #333333;
-            padding:15px;
-            border-radius:10px;
-            background:#111111;
-            margin-bottom:10px;
-            ">
-            <h4 style="color:#D4AF37;">
-            {creator["username"]}
-            </h4>
-
-            <p>
-            Role:
-            {creator["role"]}
-            </p>
-
-            <small>
-            Joined:
-            {creator["created_at"]}
-            </small>
-            </div>
-            """, unsafe_allow_html=True)
-
+                st.markdown(f"""
+                <div class='epic-card'>
+                <div style='display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;'>
+                <div>
+                <h4 style="color: var(--gold-light); margin-bottom: 5px;">
+                {creator.get('avatar', '👤')} {creator["username"]} {badges_html}
+                </h4>
+                <div style='color: var(--purple-light); font-size: 0.9rem;'>
+                {creator.get('display_name', creator['username'])}
+                </div>
+                </div>
+                <div style='text-align: right;'>
+                <div style='color: var(--gold-primary); font-weight: bold;'>{creator.get('followers', 0)}</div>
+                <small style='color: #A8A8A8;'>Followers</small>
+                </div>
+                </div>
+                <div style='display: flex; gap: 20px; font-size: 0.85rem; color: #B8B8B8;'>
+                <span>📖 {creator.get('stories', 0)} stories</span>
+                <span>🎨 {creator.get('artworks', 0)} works</span>
+                <span>👥 {creator.get('following', 0)} following</span>
+                </div>
+                <small style='color: #888888; margin-top: 10px; display: block;'>
+                Joined: {creator.get('joined', 'N/A')}
+                </small>
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.info("No creators found matching your search.")
     else:
-        st.info(
-            "No creators found."
-        )
+        st.info("👥 Creator directory loading...")
 
 # =====================================================
 # FOOTER
 # =====================================================
 
-st.divider()
+st.markdown("<div class='gold-divider'></div>", unsafe_allow_html=True)
 
-st.caption(
-    "Empire of Continuum • Creator Profile System v1.0"
-)
+st.caption("⚔️ Empire of Continuum • Creator Profile System v2.0")

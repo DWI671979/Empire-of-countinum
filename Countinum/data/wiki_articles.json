@@ -1,0 +1,122 @@
+[
+  {
+    "id": 1,
+    "title": "The Eternal Throne",
+    "article_type": "Locations",
+    "canon_status": "canon",
+    "author": "Emperor's Scribe",
+    "excerpt": "The ancient seat of power at the heart of the Empire of Continuum, said to exist beyond normal space-time.",
+    "content": "The Eternal Throne is the mythical center of all power within the Empire of Continuum. According to canonical records, it exists in a state of quantum superposition, simultaneously present and absent across all timelines. Only those deemed worthy by the Continuity Council may approach it.\n\nHistorical records indicate that the Throne has granted wisdom to rulers for millennia, its golden halls filled with whispers of futures yet to come. The architecture defies conventional geometry, with corridors that lead both outward and inward simultaneously.",
+    "views": 2847,
+    "likes": 342,
+    "tags": ["landmark", "power", "ancient"]
+  },
+  {
+    "id": 2,
+    "title": "The Sovereign Collective",
+    "article_type": "Organizations",
+    "canon_status": "canon",
+    "author": "Historian Prime",
+    "excerpt": "An ancient alliance of species united under the banner of shared destiny and cosmic balance.",
+    "content": "The Sovereign Collective represents one of the greatest civilizations ever to grace the known universe. Comprising twelve sentient species and countless sub-factions, the Collective maintains balance through the Concordance Protocol.\n\nTheir influence spans galaxies, and their cultural achievements have inspired generations of creators and builders. The Collective's philosophy emphasizes harmony between creation and continuity.",
+    "views": 1923,
+    "likes": 256,
+    "tags": ["faction", "alliance", "civilization"]
+  },
+  {
+    "id": 3,
+    "title": "The Crimson Dynasty",
+    "article_type": "Characters",
+    "canon_status": "canon",
+    "author": "Court Scribe",
+    "excerpt": "A lineage of rulers whose blood runs with the essence of power itself.",
+    "content": "The Crimson Dynasty ruled for over ten thousand years, establishing laws and traditions that still persist today. Each heir inherited not just a throne, but a cosmic responsibility to maintain the balance between worlds.\n\nThe dynasty fell during the Age of Convergence, though whispers suggest certain bloodlines continue their hidden legacy. Their artifacts remain the most sought-after relics in the Empire.",
+    "views": 3156,
+    "likes": 401,
+    "tags": ["royalty", "history", "legacy"]
+  },
+  {
+    "id": 4,
+    "title": "The Weavers of Fate",
+    "article_type": "Factions",
+    "canon_status": "non-canon",
+    "author": "Lore Master",
+    "excerpt": "A mysterious order rumored to influence the threads of destiny itself.",
+    "content": "Community submission: The Weavers are said to exist in shadow, pulling strings that determine the fate of empires. Their origins remain obscure, though legends speak of them emerging from the void between worlds.\n\nThis article represents community worldbuilding and may not reflect official canon. Canonical status pending Continuity Council review.",
+    "views": 892,
+    "likes": 127,
+    "tags": ["mystery", "power", "legend"]
+  },
+  {
+    "id": 5,
+    "title": "Chronology of Ages",
+    "article_type": "Historical Events",
+    "canon_status": "canon",
+    "author": "Temporal Keeper",
+    "excerpt": "A comprehensive timeline of the Empire of Continuum's major eras and turning points.",
+    "content": "The official timeline consists of seven major ages:\n\n1. Age of Emergence - The founding of the first civilizations\n2. Age of Building - Rapid expansion and development\n3. Age of Enlightenment - Cultural and magical renaissance\n4. Age of Shadows - The Great Conflict\n5. Age of Recovery - Reconstruction and healing\n6. Age of Balance - The current era of peace\n7. Age of Convergence - The prophesied final age\n\nEach age brought unique challenges and opportunities to shape the continuum.",
+    "views": 2341,
+    "likes": 289,
+    "tags": ["history", "timeline", "canon"]
+  },
+  {
+    "id": 6,
+    "title": "The Void Walkers",
+    "article_type": "Species",
+    "canon_status": "canon",
+    "author": "Xenoologist",
+    "excerpt": "An enigmatic species capable of traversing the spaces between worlds and dimensions.",
+    "content": "The Void Walkers are one of the oldest known sentient species, with origins predating most recorded history. They possess the rare ability to navigate dimensional rifts safely, making them invaluable traders and explorers.\n\nPhysical characteristics remain largely unknown, as they typically manifest only partially in our dimension. Their culture emphasizes patience, mystery, and the pursuit of hidden knowledge.",
+    "views": 1654,
+    "likes": 198,
+    "tags": ["species", "mysterious", "cosmic"]
+  },
+  {
+    "id": 7,
+    "title": "The Golden Libraries",
+    "article_type": "Locations",
+    "canon_status": "canon",
+    "author": "Archivist",
+    "excerpt": "Repository of all recorded knowledge within the Empire, protected by ancient magic and celestial guardians.",
+    "content": "Spanning seventeen dimensions simultaneously, the Golden Libraries contain the sum of all wisdom accumulated by the Empire across countless ages. Each book is said to contain infinite pages, revealing only the knowledge the reader is worthy of discovering.\n\nAccess is restricted to scholars of proven dedication and members of the Continuity Council. The librarians themselves are legendary figures, some of whom are rumored to have existed since the Age of Emergence.",
+    "views": 2765,
+    "likes": 334,
+    "tags": ["landmark", "knowledge", "magic"]
+  },
+  {
+    "id": 8,
+    "title": "Celestial Technologies",
+    "article_type": "Technology",
+    "canon_status": "canon",
+    "author": "Tech Sage",
+    "excerpt": "Advanced systems that blur the line between technology and magic in the Empire.",
+    "content": "Celestial Technologies represent the pinnacle of achievement in the Empire of Continuum. These systems harness the fundamental forces of creation itself, enabling feats that would seem like magic to less advanced civilizations.\n\nKey innovations include the Resonance Networks that allow instant communication across any distance, the Stability Engines that prevent paradoxes, and the Memory Vaults that preserve critical information outside normal spacetime.",
+    "views": 1823,
+    "likes": 267,
+    "tags": ["technology", "magic", "innovation"]
+  },
+  {
+    "id": 9,
+    "title": "The Prophecy of Convergence",
+    "article_type": "Lore Articles",
+    "canon_status": "canon",
+    "author": "Seer Council",
+    "excerpt": "The most significant prophecy in the Empire, predicting the unification of all timelines.",
+    "content": "Ancient texts speak of a time when all fractured timelines will converge into singular reality. This prophecy has guided policy decisions for centuries and remains the driving force behind the Continuity Council's mission.\n\nThe prophecy states that from convergence will emerge either enlightenment or chaos—no middle ground exists. Preparations continue across all dimensions to ensure the most favorable outcome.",
+    "views": 3201,
+    "likes": 412,
+    "tags": ["prophecy", "fate", "destiny"]
+  },
+  {
+    "id": 10,
+    "title": "The Nexus Protocol",
+    "article_type": "Continuity Documents",
+    "canon_status": "canon",
+    "author": "Protocol Master",
+    "excerpt": "The fundamental laws governing interaction between different universes and timelines.",
+    "content": "The Nexus Protocol establishes rules for cross-timeline communication and travel, preventing causality violations and paradoxes. It is enforced by the Continuity Wardens and violations carry severe penalties.\n\nKey principles include the Prohibition of Retroactive Change, the Law of Timeline Integrity, and the Doctrine of Continuity Conservation. These laws form the bedrock of galactic law.",
+    "views": 1456,
+    "likes": 189,
+    "tags": ["laws", "protocol", "governance"]
+  }
+]

@@ -1,4 +1,6 @@
 import streamlit as st
+import json
+import os
 
 from services.wiki_service import (
     create_article,
@@ -31,64 +33,76 @@ if "selected_wiki_article" not in st.session_state:
     st.session_state.selected_wiki_article = None
 
 # =====================================================
+# LOAD SAMPLE DATA
+# =====================================================
+
+def load_wiki_data():
+    data_path = os.path.join(
+        os.path.dirname(__file__),
+        "../data/wiki_articles.json"
+    )
+    if os.path.exists(data_path):
+        with open(data_path, 'r') as f:
+            return json.load(f)
+    return []
+
+wiki_data = load_wiki_data()
+
+# =====================================================
 # HEADER
 # =====================================================
 
-st.title("📖 Empire of Continuum Wiki")
+st.markdown(
+    """
+    <h1 class='main-title'>
+    📖 EMPIRE OF CONTINUUM WIKI
+    </h1>
+    """,
+    unsafe_allow_html=True
+)
 
 st.markdown("""
+<div class='highlight-mystical'>
 The official encyclopedia of the Empire of Continuum.
 
-Browse characters, factions, locations, historical
-events, technologies, species, organizations, and
-continuity documents that define the shared universe.
-""")
+Browse characters, factions, locations, historical events, technologies, species, organizations, and continuity documents that define the shared universe.
+</div>
+""", unsafe_allow_html=True)
 
-st.divider()
+st.markdown("<div class='gold-divider'></div>", unsafe_allow_html=True)
 
 # =====================================================
 # STATISTICS
 # =====================================================
 
-stats = get_wiki_statistics()
-
 c1, c2, c3, c4 = st.columns(4)
 
 with c1:
-    st.metric(
-        "Articles",
-        stats["total_articles"]
-    )
+    st.markdown(f"<div class='stMetric'><div style='color: var(--gold-primary); font-weight: bold;'>{len(wiki_data)}</div><div style='font-size: 0.9rem;'>Total Articles</div></div>", unsafe_allow_html=True)
 
 with c2:
-    st.metric(
-        "Canon",
-        stats["canon_articles"]
-    )
+    canon_count = len([a for a in wiki_data if a.get('canon_status') == 'canon'])
+    st.markdown(f"<div class='stMetric'><div style='color: #A8E6A1; font-weight: bold;'>{canon_count}</div><div style='font-size: 0.9rem;'>Canon Articles</div></div>", unsafe_allow_html=True)
 
 with c3:
-    st.metric(
-        "Non-Canon",
-        stats["noncanon_articles"]
-    )
+    noncanon_count = len([a for a in wiki_data if a.get('canon_status') == 'non-canon'])
+    st.markdown(f"<div class='stMetric'><div style='color: #F5C89A; font-weight: bold;'>{noncanon_count}</div><div style='font-size: 0.9rem;'>Non-Canon</div></div>", unsafe_allow_html=True)
 
 with c4:
-    st.metric(
-        "Views",
-        stats["total_views"]
-    )
+    total_views = sum(a.get('views', 0) for a in wiki_data)
+    st.markdown(f"<div class='stMetric'><div style='color: var(--purple-light); font-weight: bold;'>{total_views:,}</div><div style='font-size: 0.9rem;'>Total Views</div></div>", unsafe_allow_html=True)
 
-st.divider()
+st.markdown("<div class='gold-divider'></div>", unsafe_allow_html=True)
 
 # =====================================================
 # TABS
 # =====================================================
 
 tab1, tab2, tab3, tab4 = st.tabs([
-    "Wiki Browser",
-    "Create Article",
-    "Timeline",
-    "Popular Articles"
+    "🔎 Wiki Browser",
+    "✍️ Create Article",
+    "⏳ Timeline",
+    "🔥 Popular Articles"
 ])
 
 # =====================================================
@@ -97,126 +111,124 @@ tab1, tab2, tab3, tab4 = st.tabs([
 
 with tab1:
 
-    st.subheader(
-        "🔎 Search Encyclopedia"
-    )
+    st.subheader("Search Encyclopedia")
 
-    search_term = st.text_input(
-        "Search"
-    )
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
+        search_term = st.text_input(
+            "Search articles by title or content",
+            placeholder="Type to search..."
+        )
 
-    article_type = st.selectbox(
-        "Filter by Type",
-        ["All"] + get_article_types()
-    )
+    with col2:
+        article_type = st.selectbox(
+            "Filter by Type",
+            ["All Types"] + list(set(a.get('article_type', 'Unknown') for a in wiki_data))
+        )
 
+    st.markdown("<div class='gold-divider'></div>", unsafe_allow_html=True)
+
+    # Filter articles
+    filtered_articles = wiki_data.copy()
+    
     if search_term:
+        filtered_articles = [
+            a for a in filtered_articles 
+            if search_term.lower() in a.get('title', '').lower() or 
+               search_term.lower() in a.get('excerpt', '').lower()
+        ]
 
-        articles = search_articles(
-            search_term
-        )
+    if article_type != "All Types":
+        filtered_articles = [a for a in filtered_articles if a.get('article_type') == article_type]
 
-    elif article_type != "All":
-
-        articles = get_articles_by_type(
-            article_type
-        )
-
+    if not filtered_articles:
+        st.info("📭 No articles found matching your search.")
     else:
-
-        articles = get_articles()
-
-    st.divider()
-
-    if not articles:
-
-        st.info(
-            "No articles found."
-        )
-
-    for article in articles:
-
-        canon_badge = (
-            "🟢 Canon"
-            if article["canon_status"] == "canon"
-            else "🟡 Non-Canon"
-        )
-
-        st.markdown(f"""
-### {article['title']}
-
-Type: **{article['article_type']}**
-
-Status: **{canon_badge}**
-""")
-
-        if st.button(
-            f"View Article #{article['id']}",
-            key=f"wiki_{article['id']}"
-        ):
-
-            st.session_state.selected_wiki_article = (
-                article["id"]
+        st.markdown(f"**Found {len(filtered_articles)} article(s)**")
+        
+        for article in filtered_articles:
+            canon_badge = (
+                "<span class='badge-canon'>🟢 Canon</span>"
+                if article.get("canon_status") == "canon"
+                else "<span class='badge-noncanon'>🟡 Non-Canon</span>"
             )
 
-            st.rerun()
+            col1, col2 = st.columns([1, 4])
+            
+            with col1:
+                st.markdown(f"<div style='text-align: center; font-size: 2rem;'>📄</div>", unsafe_allow_html=True)
+            
+            with col2:
+                st.markdown(f"""
+<div class='epic-card'>
+<h4 style='color: var(--gold-light); margin-bottom: 8px;'>{article['title']}</h4>
+<div style='color: var(--purple-light); font-size: 0.9rem; margin-bottom: 8px;'>
+{article['article_type']} • {canon_badge}
+</div>
+<p style='color: #E8E8E8; margin-bottom: 12px;'>{article['excerpt']}</p>
+<div style='display: flex; gap: 15px; font-size: 0.85rem; color: var(--gold-primary);'>
+<span>👁️ {article.get('views', 0):,} views</span>
+<span>❤️ {article.get('likes', 0)} likes</span>
+<span>✍️ {article['author']}</span>
+</div>
+</div>
+                """, unsafe_allow_html=True)
 
-        st.divider()
+            if st.button(
+                f"Read Full Article",
+                key=f"wiki_{article['id']}"
+            ):
+                st.session_state.selected_wiki_article = article["id"]
+                st.rerun()
 
 # =====================================================
 # ARTICLE VIEWER
 # =====================================================
 
 if st.session_state.selected_wiki_article:
-
-    article = get_article(
-        st.session_state.selected_wiki_article
+    article = next(
+        (a for a in wiki_data if a["id"] == st.session_state.selected_wiki_article),
+        None
     )
 
     if article:
+        st.markdown("<div class='gold-divider'></div>", unsafe_allow_html=True)
 
-        increment_article_view(
-            article["id"]
-        )
-
-        st.divider()
-
-        st.header(
-            article["title"]
-        )
-
-        st.caption(
-            f"Author: {article['author_name']}"
-        )
-
-        col1, col2 = st.columns(2)
-
+        col1, col2, col3 = st.columns([2, 1, 1])
+        
         with col1:
-
-            st.metric(
-                "Type",
-                article["article_type"]
-            )
+            st.markdown(f"<h2 style='color: var(--gold-light);'>{article['title']}</h2>", unsafe_allow_html=True)
+            st.caption(f"✍️ By {article['author']}")
 
         with col2:
+            canon_text = "Canon" if article.get("canon_status") == "canon" else "Community Submission"
+            st.markdown(f"<div class='badge-canon' style='text-align: center;'>{canon_text}</div>", unsafe_allow_html=True)
 
-            st.metric(
-                "Status",
-                article["canon_status"]
-            )
+        with col3:
+            st.markdown(f"<div style='text-align: center; background: rgba(26,26,46,0.8); padding: 10px; border-radius: 8px;'><div style='font-size: 1.5rem; color: var(--gold-primary);'>{article.get('views', 0):,}</div><div style='font-size: 0.8rem;'>Views</div></div>", unsafe_allow_html=True)
+
+        st.markdown("<div class='gold-divider'></div>", unsafe_allow_html=True)
+
+        st.markdown(f"**Type:** {article['article_type']} | **Tags:** {', '.join(article.get('tags', []))}")
+        
+        st.markdown(f"""
+<div class='highlight-mystical'>
+{article['content']}
+</div>
+        """, unsafe_allow_html=True)
+
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            st.metric("👁️ Views", f"{article.get('views', 0):,}")
+        with c2:
+            st.metric("❤️ Likes", f"{article.get('likes', 0)}")
+        with c3:
+            st.metric("📝 Type", article['article_type'])
 
         st.divider()
 
-        st.markdown(
-            article["content"]
-        )
-
-        st.divider()
-
-        if st.button(
-            "⬅ Return to Wiki"
-        ):
-
+        if st.button("⬅️ Back to Wiki"):
             st.session_state.selected_wiki_article = None
             st.rerun()
 
@@ -226,68 +238,46 @@ if st.session_state.selected_wiki_article:
 
 with tab2:
 
-    st.subheader(
-        "✍ Create New Wiki Article"
-    )
+    st.subheader("✍️ Create New Wiki Article")
 
-    title = st.text_input(
-        "Article Title"
-    )
+    title = st.text_input("Article Title", placeholder="Enter article title")
 
     article_type = st.selectbox(
         "Article Type",
-        get_article_types()
+        ["Characters", "Locations", "Factions", "Organizations", "Species", "Technology", "Historical Events", "Lore Articles", "Timeline Entries", "Continuity Documents"]
     )
 
     canon_status = st.selectbox(
         "Canon Status",
-        [
-            "non-canon",
-            "canon"
-        ]
+        ["non-canon", "canon"],
+        help="Canon status is typically assigned by the Continuity Council after review"
     )
 
     content = st.text_area(
         "Article Content",
-        height=450
+        height=450,
+        placeholder="Write your article content here..."
     )
 
-    if st.button(
-        "Submit Article"
-    ):
+    if st.button("📜 Submit Article", use_container_width=True):
 
         if not title.strip():
-
-            st.error(
-                "Title required."
-            )
-
+            st.error("Title required.")
         elif not content.strip():
-
-            st.error(
-                "Content required."
-            )
-
+            st.error("Content required.")
         else:
-
-            article_id = create_article(
-                title=title,
-                article_type=article_type,
-                content=content,
-                author_id=st.session_state.user_id,
-                canon_status=canon_status
-            )
-
-            st.success(
-                f"""
-Article submitted successfully.
-
-Article ID:
-{article_id}
-"""
-            )
-
-            st.balloons()
+            try:
+                article_id = create_article(
+                    title=title,
+                    article_type=article_type,
+                    content=content,
+                    author_id=st.session_state.user_id,
+                    canon_status=canon_status
+                )
+                st.success(f"✅ Article submitted successfully!\n\nArticle ID: {article_id}")
+                st.balloons()
+            except Exception as e:
+                st.error(f"Error submitting article: {str(e)}")
 
 # =====================================================
 # TAB 3 - TIMELINE
@@ -295,41 +285,32 @@ Article ID:
 
 with tab3:
 
-    st.subheader(
-        "⏳ Continuity Timeline"
-    )
+    st.subheader("⏳ Continuity Timeline")
 
-    timeline_events = get_timeline_events()
+    st.markdown("""
+<div class='highlight-mystical'>
+The official timeline consists of seven major ages that have shaped the Empire of Continuum:
+</div>
+    """, unsafe_allow_html=True)
 
-    if not timeline_events:
+    timeline_items = [
+        {"era": "Age of Emergence", "period": "The First Dawn", "description": "The founding of the first civilizations and emergence of sentient beings"},
+        {"era": "Age of Building", "period": "Expansion Era", "description": "Rapid expansion and development of technologies and societies"},
+        {"era": "Age of Enlightenment", "period": "Renaissance", "description": "Cultural and magical renaissance across all known worlds"},
+        {"era": "Age of Shadows", "period": "The Great Conflict", "description": "The devastating conflict that nearly ended the Continuum"},
+        {"era": "Age of Recovery", "period": "Reconstruction", "description": "Healing and rebuilding after the great conflict"},
+        {"era": "Age of Balance", "period": "Current Era", "description": "The ongoing age of peace and cooperation"},
+        {"era": "Age of Convergence", "period": "The Prophecy", "description": "The prophesied final age when all timelines converge"},
+    ]
 
-        st.info(
-            "No timeline events available."
-        )
-
-    for event in timeline_events:
-
-        status = (
-            "🟢 Canon"
-            if event["canon_status"] == "canon"
-            else "🟡 Non-Canon"
-        )
-
+    for i, event in enumerate(timeline_items, 1):
         st.markdown(f"""
-### {event['event_title']}
-
-**Date:** {event['event_date']}
-
-**Era:** {event['era']}
-
-**Status:** {status}
-""")
-
-        st.write(
-            event["description"]
-        )
-
-        st.divider()
+<div class='epic-card'>
+<h4 style='color: var(--gold-light);'>{i}. {event['era']}</h4>
+<div style='color: var(--purple-light); font-size: 0.9rem; margin-bottom: 8px;'>{event['period']}</div>
+<p style='color: #E8E8E8;'>{event['description']}</p>
+</div>
+        """, unsafe_allow_html=True)
 
 # =====================================================
 # TAB 4 - POPULAR ARTICLES
@@ -337,99 +318,40 @@ with tab3:
 
 with tab4:
 
-    st.subheader(
-        "🔥 Most Viewed Articles"
-    )
+    st.subheader("🔥 Most Viewed & Liked Articles")
 
-    popular_articles = get_popular_articles()
+    sorted_articles = sorted(wiki_data, key=lambda x: (x.get('views', 0), x.get('likes', 0)), reverse=True)[:5]
 
-    if not popular_articles:
+    if not sorted_articles:
+        st.info("No articles available yet.")
+    else:
+        for idx, article in enumerate(sorted_articles, 1):
+            col1, col2 = st.columns([4, 1])
+            
+            with col1:
+                st.markdown(f"""
+<div class='publication-card'>
+<h4 style='color: var(--gold-light); margin-bottom: 8px;'>#{idx} - {article['title']}</h4>
+<div style='display: flex; gap: 20px; font-size: 0.9rem; margin-bottom: 8px;'>
+<span style='color: var(--purple-light);'>{article['article_type']}</span>
+<span style='color: var(--gold-primary);'>✍️ {article['author']}</span>
+</div>
+<div style='display: flex; gap: 20px; font-size: 0.85rem; color: #B8B8B8;'>
+<span>👁️ {article.get('views', 0):,} views</span>
+<span>❤️ {article.get('likes', 0)} likes</span>
+</div>
+</div>
+                """, unsafe_allow_html=True)
 
-        st.info(
-            "No articles available."
-        )
-
-    for article in popular_articles:
-
-        st.markdown(f"""
-### {article['title']}
-
-Type:
-{article['article_type']}
-
-Status:
-{article['canon_status']}
-
-Views:
-{article['views']}
-""")
-
-        st.divider()
-
-# =====================================================
-# SIDEBAR
-# =====================================================
-
-with st.sidebar:
-
-    st.header(
-        "📚 Encyclopedia"
-    )
-
-    st.write(
-        f"Logged in as "
-        f"**{st.session_state.username}**"
-    )
-
-    st.divider()
-
-    st.markdown("""
-### Article Types
-
-- Characters
-- Locations
-- Factions
-- Organizations
-- Species
-- Technology
-- Historical Events
-- Lore Articles
-- Timeline Entries
-- Continuity Documents
-
-### Canon Guide
-
-🟢 Canon
-
-Official continuity
-
-🟡 Non-Canon
-
-Community submissions
-""")
-
-# =====================================================
-# QUICK NAVIGATION
-# =====================================================
-
-with st.sidebar:
-
-    st.subheader(
-        "Quick Browse"
-    )
-
-    for item in get_article_types():
-
-        st.write(
-            f"• {item}"
-        )
+            with col2:
+                if st.button("View", key=f"popular_{article['id']}"):
+                    st.session_state.selected_wiki_article = article["id"]
+                    st.rerun()
 
 # =====================================================
 # FOOTER
 # =====================================================
 
-st.divider()
+st.markdown("<div class='gold-divider'></div>", unsafe_allow_html=True)
 
-st.caption(
-    "Empire of Continuum • Continuity Wiki v1.0"
-)
+st.caption("⚔️ Empire of Continuum • Continuity Wiki v2.0 • Powered by Epic Fantasy Design")
