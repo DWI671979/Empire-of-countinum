@@ -37,12 +37,12 @@ if "selected_story_id" not in st.session_state:
 st.title("📚 Empire Story Library")
 
 st.markdown("""
-Explore stories, lore, character profiles,
-worldbuilding documents and comics created
-by the Empire of Continuum community.
-""")
+<div class='highlight-mystical'>
+Explore stories, lore, character profiles, worldbuilding documents and comics created by the Empire of Continuum community.
+</div>
+""", unsafe_allow_html=True)
 
-st.divider()
+st.markdown("<div class='gold-divider'></div>", unsafe_allow_html=True)
 
 # =====================================================
 # FEATURED SECTION
@@ -61,14 +61,15 @@ with col1:
         for story in top_liked:
 
             st.markdown(f"""
-            **{story['title']}**
-
-            Author: {story['author_name']}
-
-            ❤️ {story['likes']} | 👁️ {story['views']}
+            <div class='epic-card'>
+            <h4 style='color: var(--gold-light); margin-bottom: 8px;'>{story['title']}</h4>
+            <div style='color: var(--purple-light); font-size: 0.9rem; margin-bottom: 8px;'>By {story['author_name']}</div>
+            <div style='display: flex; gap: 15px; font-size: 0.85rem; color: var(--gold-primary);'>
+            <span>❤️ {story['likes']}</span>
+            <span>👁️ {story['views']}</span>
+            </div>
+            </div>
             """)
-
-            st.divider()
 
     else:
         st.info("No stories yet.")
@@ -84,19 +85,20 @@ with col2:
         for story in top_viewed:
 
             st.markdown(f"""
-            **{story['title']}**
-
-            Author: {story['author_name']}
-
-            ❤️ {story['likes']} | 👁️ {story['views']}
+            <div class='epic-card'>
+            <h4 style='color: var(--gold-light); margin-bottom: 8px;'>{story['title']}</h4>
+            <div style='color: var(--purple-light); font-size: 0.9rem; margin-bottom: 8px;'>By {story['author_name']}</div>
+            <div style='display: flex; gap: 15px; font-size: 0.85rem; color: var(--gold-primary);'>
+            <span>❤️ {story['likes']}</span>
+            <span>👁️ {story['views']}</span>
+            </div>
+            </div>
             """)
-
-            st.divider()
 
     else:
         st.info("No stories yet.")
 
-st.divider()
+st.markdown("<div class='gold-divider'></div>", unsafe_allow_html=True)
 
 # =====================================================
 # SEARCH SECTION
@@ -160,13 +162,15 @@ for story in results:
     with st.container():
 
         st.markdown(f"""
-        ### {story['title']}
-
-        **Author:** {story['author_name']}
-
-        **Category:** {story['category']}
-
-        ❤️ {story['likes']} | 👁️ {story['views']}
+        <div class='publication-card'>
+        <h4 style='color: var(--gold-light); margin-bottom: 8px;'>{story['title']}</h4>
+        <div style='color: var(--purple-light); font-size: 0.9rem; margin-bottom: 10px;'>By {story['author_name']}</div>
+        <div style='display: flex; gap: 15px; font-size: 0.85rem; color: #B8B8B8;'>
+        <span>📚 {story['category']}</span>
+        <span>❤️ {story['likes']}</span>
+        <span>👁️ {story['views']}</span>
+        </div>
+        </div>
         """)
 
         if st.button(
@@ -177,8 +181,6 @@ for story in results:
                 story["id"]
             )
             st.rerun()
-
-        st.divider()
 
 # =====================================================
 # STORY READER

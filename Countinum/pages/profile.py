@@ -42,7 +42,12 @@ profile = get_profile(user_id)
 if profile is None:
     profile = {}
 
-stats = get_user_statistics(user_id)
+try:
+    stats = get_user_statistics(user_id)
+    if stats is None:
+        stats = {}
+except:
+    stats = {}
 
 # Use sample profile if available
 sample_profile = next((p for p in profiles_data if p['username'] == username), None)

@@ -37,12 +37,12 @@ if "selected_artwork_id" not in st.session_state:
 st.title("🎨 Empire Artwork Gallery")
 
 st.markdown("""
-Discover community-created artwork from across the
-Empire of Continuum. Upload your creations, explore
-featured illustrations, and support fellow artists.
-""")
+<div class='highlight-mystical'>
+Discover community-created artwork from across the Empire of Continuum. Upload your creations, explore featured illustrations, and support fellow artists.
+</div>
+""", unsafe_allow_html=True)
 
-st.divider()
+st.markdown("<div class='gold-divider'></div>", unsafe_allow_html=True)
 
 # =====================================================
 # TABS
@@ -74,14 +74,15 @@ with gallery_tab:
             for art in top_liked:
 
                 st.markdown(f"""
-                **{art['title']}**
-
-                Artist: {art['artist_name']}
-
-                ❤️ {art['likes']} | 👁️ {art['views']}
+                <div class='epic-card'>
+                <h4 style='color: var(--gold-light); margin-bottom: 8px;'>{art['title']}</h4>
+                <div style='color: var(--purple-light); font-size: 0.9rem; margin-bottom: 8px;'>Artist: {art['artist_name']}</div>
+                <div style='display: flex; gap: 15px; font-size: 0.85rem; color: var(--gold-primary);'>
+                <span>❤️ {art['likes']}</span>
+                <span>👁️ {art['views']}</span>
+                </div>
+                </div>
                 """)
-
-                st.divider()
 
         else:
             st.info("No artwork available.")
@@ -97,19 +98,20 @@ with gallery_tab:
             for art in top_viewed:
 
                 st.markdown(f"""
-                **{art['title']}**
-
-                Artist: {art['artist_name']}
-
-                ❤️ {art['likes']} | 👁️ {art['views']}
+                <div class='epic-card'>
+                <h4 style='color: var(--gold-light); margin-bottom: 8px;'>{art['title']}</h4>
+                <div style='color: var(--purple-light); font-size: 0.9rem; margin-bottom: 8px;'>Artist: {art['artist_name']}</div>
+                <div style='display: flex; gap: 15px; font-size: 0.85rem; color: var(--gold-primary);'>
+                <span>❤️ {art['likes']}</span>
+                <span>👁️ {art['views']}</span>
+                </div>
+                </div>
                 """)
-
-                st.divider()
 
         else:
             st.info("No artwork available.")
 
-    st.divider()
+    st.markdown("<div class='gold-divider'></div>", unsafe_allow_html=True)
 
     # =================================================
     # SEARCH
@@ -143,12 +145,14 @@ with gallery_tab:
         with st.container():
 
             st.markdown(f"""
-            ### {artwork['title']}
-
-            Artist: **{artwork['artist_name']}**
-
-            ❤️ {artwork['likes']} |
-            👁️ {artwork['views']}
+            <div class='publication-card'>
+            <h4 style='color: var(--gold-light); margin-bottom: 8px;'>{artwork['title']}</h4>
+            <div style='color: var(--purple-light); font-size: 0.9rem; margin-bottom: 10px;'>Artist: {artwork['artist_name']}</div>
+            <div style='display: flex; gap: 15px; font-size: 0.85rem; color: #B8B8B8;'>
+            <span>❤️ {artwork['likes']}</span>
+            <span>👁️ {artwork['views']}</span>
+            </div>
+            </div>
             """)
 
             if Path(
@@ -176,8 +180,6 @@ with gallery_tab:
                 )
 
                 st.rerun()
-
-            st.divider()
 
 # =====================================================
 # ARTWORK VIEWER

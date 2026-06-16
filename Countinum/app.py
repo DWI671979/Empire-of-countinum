@@ -59,18 +59,26 @@ if not st.session_state.logged_in:
 
     with login_tab:
 
+        st.markdown("""
+        <div class='highlight-mystical'>
+        Welcome back, creator. Enter the Empire.
+        </div>
+        """, unsafe_allow_html=True)
+
         email = st.text_input(
             "Email",
-            key="login_email"
+            key="login_email",
+            placeholder="your@email.com"
         )
 
         password = st.text_input(
             "Password",
             type="password",
-            key="login_password"
+            key="login_password",
+            placeholder="Enter your password"
         )
 
-        if st.button("Enter Empire"):
+        if st.button("⚔️ Enter Empire", use_container_width=True):
 
             user = authenticate_user(
                 email,
@@ -84,42 +92,52 @@ if not st.session_state.logged_in:
                 st.session_state.username = user["username"]
                 st.session_state.role = user["role"]
 
-                st.success("Welcome back.")
+                st.success("✅ Welcome back, creator.")
                 st.rerun()
 
             else:
-                st.error("Invalid credentials")
+                st.error("❌ Invalid credentials")
 
     with register_tab:
 
+        st.markdown("""
+        <div class='highlight-mystical'>
+        Forge your identity in the Empire.
+        </div>
+        """, unsafe_allow_html=True)
+
         username = st.text_input(
-            "Username"
+            "Creator Name",
+            placeholder="Choose your creator name"
         )
 
         email = st.text_input(
-            "Email"
+            "Email",
+            placeholder="your@email.com"
         )
 
         password = st.text_input(
             "Password",
-            type="password"
+            type="password",
+            placeholder="At least 8 characters"
         )
 
         confirm = st.text_input(
             "Confirm Password",
-            type="password"
+            type="password",
+            placeholder="Confirm your password"
         )
 
-        if st.button("Create Account"):
+        if st.button("⚔️ Create Account", use_container_width=True):
 
             if password != confirm:
                 st.error(
-                    "Passwords do not match."
+                    "❌ Passwords do not match."
                 )
 
             elif len(password) < 8:
                 st.error(
-                    "Password must contain at least 8 characters."
+                    "❌ Password must contain at least 8 characters."
                 )
 
             else:
@@ -131,22 +149,25 @@ if not st.session_state.logged_in:
                 )
 
                 if success:
-                    st.success(message)
+                    st.success(f"✅ {message}")
+                    st.balloons()
 
                 else:
-                    st.error(message)
+                    st.error(f"❌ {message}")
 
 else:
 
     st.success(
-        f"Logged in as {st.session_state.username}"
+        f"⚔️ Logged in as **{st.session_state.username}**"
     )
 
-    st.info(
-        "Use the left sidebar to navigate between pages."
-    )
+    st.markdown("""
+    <div class='epic-card'>
+    Use the left sidebar to navigate the Empire and create legendary content.
+    </div>
+    """, unsafe_allow_html=True)
 
-    if st.button("Logout"):
+    if st.button("🚪 Logout", use_container_width=True):
 
         st.session_state.logged_in = False
         st.session_state.user_id = None

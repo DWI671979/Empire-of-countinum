@@ -189,7 +189,7 @@ user_id = st.session_state.get("user_id")
 
 st.title("⚔️ Dashboard")
 st.markdown(f"Welcome back, **{username}** — *{role}*")
-st.divider()
+st.markdown("<div class='gold-divider'></div>", unsafe_allow_html=True)
 
 stats = get_dashboard_stats()
 
@@ -213,7 +213,7 @@ if role in ("administrator", "continuity_manager"):
     c7.metric("📬 Open Messages",     stats["open_messages"])
     c8.metric("🔎 Pending Reviews",   stats["pending_moderation"])
 
-    st.divider()
+    st.markdown("<div class='gold-divider'></div>", unsafe_allow_html=True)
 
     # --------------------------------------------------
     # MODERATION QUEUE
@@ -281,10 +281,13 @@ if role in ("administrator", "continuity_manager"):
                 else "🟡" if s["status"] == "pending"
                 else "🔴"
             )
-            st.markdown(
-                f"{status_icon} **{s['title']}** "
-                f"by *{s['username']}* — {s['created_at'][:10]}"
-            )
+            st.markdown(f"""
+<div class='epic-card'>
+<div>{status_icon} <strong>{s['title']}</strong></div>
+<small style='color: var(--purple-light);'>by {s['username']}</small>
+<div style='font-size: 0.8rem; color: #A8A8A8; margin-top: 5px;'>{s['created_at'][:10]}</div>
+</div>
+            """, unsafe_allow_html=True)
 
     with col_right:
         st.subheader("🎨 Recent Artworks")
@@ -297,38 +300,30 @@ if role in ("administrator", "continuity_manager"):
                 else "🟡" if a["status"] == "pending"
                 else "🔴"
             )
-            st.markdown(
-                f"{status_icon} **{a['title']}** "
-                f"by *{a['username']}* — {a['created_at'][:10]}"
-            )
+            st.markdown(f"""
+<div class='epic-card'>
+<div>{status_icon} <strong>{a['title']}</strong></div>
+<small style='color: var(--purple-light);'>by {a['username']}</small>
+<div style='font-size: 0.8rem; color: #A8A8A8; margin-top: 5px;'>{a['created_at'][:10]}</div>
+</div>
+            """, unsafe_allow_html=True)
 
-    st.divider()
+    st.markdown("<div class='gold-divider'></div>", unsafe_allow_html=True)
 
     st.subheader("👥 Newest Members")
     new_users = get_recent_users()
     if not new_users:
         st.info("No users yet.")
     for u in new_users:
-        st.markdown(
-            f"• **{u['username']}** — *{u['role']}* "
-            f"— joined {u['created_at'][:10]}"
-        )
+        st.markdown(f"""
+<div class='epic-card'>
+<strong>{u['username']}</strong>
+<div style='color: var(--purple-light); font-size: 0.9rem;'>Role: {u['role']}</div>
+<small style='color: #A8A8A8;'>Joined: {u['created_at'][:10]}</small>
+</div>
+        """, unsafe_allow_html=True)
 
-# =====================================================
-# REGULAR USER / CREATOR VIEW
-# =====================================================
-
-else:
-
-    st.subheader("📊 My Activity")
-
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("📖 Universe Stories",   stats["total_stories"])
-    c2.metric("🎨 Universe Artworks",  stats["total_artworks"])
-    c3.metric("📚 Wiki Articles",      stats["total_wiki"])
-    c4.metric("🤝 Active Projects",    stats["total_projects"])
-
-    st.divider()
+    st.markdown("<div class='gold-divider'></div>", unsafe_allow_html=True)
 
     col_left, col_right = st.columns(2)
 
