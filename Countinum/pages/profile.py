@@ -1,7 +1,11 @@
 import streamlit as st
-import json
-import os
+import sys
+from pathlib import Path
 
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from utils.data_loader import load_user_profiles
 from services.profile_service import (
     get_profile,
     update_profile,
@@ -24,17 +28,7 @@ if not st.session_state.get("logged_in", False):
 # LOAD SAMPLE DATA
 # =====================================================
 
-def load_profiles_data():
-    data_path = os.path.join(
-        os.path.dirname(__file__),
-        "../data/user_profiles.json"
-    )
-    if os.path.exists(data_path):
-        with open(data_path, 'r') as f:
-            return json.load(f)
-    return []
-
-profiles_data = load_profiles_data()
+profiles_data = load_user_profiles()
 
 # =====================================================
 # USER DATA

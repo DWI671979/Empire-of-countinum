@@ -1,7 +1,11 @@
 import streamlit as st
-import json
-import os
+import sys
+from pathlib import Path
 
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from utils.data_loader import load_wiki_articles
 from services.wiki_service import (
     create_article,
     get_article,
@@ -36,17 +40,7 @@ if "selected_wiki_article" not in st.session_state:
 # LOAD SAMPLE DATA
 # =====================================================
 
-def load_wiki_data():
-    data_path = os.path.join(
-        os.path.dirname(__file__),
-        "../data/wiki_articles.json"
-    )
-    if os.path.exists(data_path):
-        with open(data_path, 'r') as f:
-            return json.load(f)
-    return []
-
-wiki_data = load_wiki_data()
+wiki_data = load_wiki_articles()
 
 # =====================================================
 # HEADER
