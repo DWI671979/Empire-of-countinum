@@ -1,4 +1,3 @@
-
 from database.database import get_connection
 
 
@@ -24,6 +23,7 @@ def create_tables():
 
     # =====================================================
     # USER PROFILES
+    # ✅ FIX: Added tagline, location, portfolio
     # =====================================================
 
     cursor.execute("""
@@ -31,10 +31,47 @@ def create_tables():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER UNIQUE,
         display_name TEXT,
-        bio TEXT,
+        tagline TEXT DEFAULT '',
+        location TEXT DEFAULT '',
+        website TEXT DEFAULT '',
+        portfolio TEXT DEFAULT '',
+        bio TEXT DEFAULT '',
         avatar_path TEXT,
-        website TEXT,
         social_links TEXT,
+        FOREIGN KEY(user_id) REFERENCES users(id)
+    )
+    """)
+
+    # =====================================================
+    # FOLLOWERS
+    # ✅ FIX: Added missing table
+    # =====================================================
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS followers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        follower_id INTEGER NOT NULL,
+        following_id INTEGER NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(follower_id, following_id),
+        FOREIGN KEY(follower_id) REFERENCES users(id),
+        FOREIGN KEY(following_id) REFERENCES users(id)
+    )
+    """)
+
+    # =====================================================
+    # NOTIFICATIONS
+    # ✅ FIX: Added missing table
+    # =====================================================
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS notifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        message TEXT NOT NULL,
+        read_status INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(user_id) REFERENCES users(id)
     )
     """)
@@ -169,16 +206,20 @@ def create_tables():
 
     # =====================================================
     # COLLABORATION PROJECTS
+    # ✅ FIX: Added creator_id, category, recruitment_open
     # =====================================================
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS collaboration_projects (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
+        creator_id INTEGER NOT NULL,
+        category TEXT,
         description TEXT,
-        owner_id INTEGER NOT NULL,
+        recruitment_open INTEGER DEFAULT 1,
         status TEXT DEFAULT 'open',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(creator_id) REFERENCES users(id)
     )
     """)
 
@@ -192,6 +233,24 @@ def create_tables():
         project_id INTEGER NOT NULL,
         user_id INTEGER NOT NULL,
         role TEXT DEFAULT 'member'
+    )
+    """)
+
+    # =====================================================
+    # PROJECT JOIN REQUESTS
+    # ✅ FIX: Added missing table
+    # =====================================================
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS project_join_requests (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        project_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        message TEXT,
+        status TEXT DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(project_id) REFERENCES collaboration_projects(id),
+        FOREIGN KEY(user_id) REFERENCES users(id)
     )
     """)
 
@@ -263,4 +322,3 @@ def create_tables():
 if __name__ == "__main__":
     create_tables()
     print("Empire of Continuum database schema created successfully.")
-

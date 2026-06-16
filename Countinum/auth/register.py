@@ -1,4 +1,4 @@
-import bcrypt # type: ignore
+import bcrypt  # ✅ FIX 3: Added missing import
 
 from database.database import get_connection
 

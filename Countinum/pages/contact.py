@@ -1,10 +1,11 @@
 import streamlit as st
 
 from services.contact_service import (
-    create_contact_message,
+    submit_message,
     get_user_messages,
-    get_contact_statistics,
-    get_contact_categories
+    get_all_messages,
+    update_message_status,
+    get_open_message_count
 )
 
 # =====================================================
@@ -12,275 +13,171 @@ from services.contact_service import (
 # =====================================================
 
 if not st.session_state.get("logged_in", False):
-    st.warning(
-        "Please login to contact the Continuity Team."
-    )
+    st.warning("Please login to contact the Continuity Team.")
     st.stop()
 
 # =====================================================
 # PAGE HEADER
 # =====================================================
 
-st.title("📨 Contact Continuity Management")
+st.title("📬 Contact the Continuity Team")
 
 st.markdown("""
-Need assistance?
-
-Contact the Empire of Continuum Continuity
-Management Team regarding moderation,
-copyright issues, canon reviews,
-technical support, account concerns,
-or general questions.
+Have a question about canon, lore, or your submitted work?
+Send a message directly to the Continuity Management Team.
+They will review your message and respond as soon as possible.
 """)
 
 st.divider()
 
 # =====================================================
-# STATISTICS
+# ADMIN / CONTINUITY MANAGER VIEW
 # =====================================================
 
-stats = get_contact_statistics()
+user_role = st.session_state.get("role", "")
 
-c1, c2, c3, c4 = st.columns(4)
+if user_role in ("administrator", "continuity_manager"):
 
-with c1:
-    st.metric(
-        "Tickets",
-        stats["total"]
-    )
+    st.subheader("📋 Incoming Messages")
 
-with c2:
-    st.metric(
-        "Open",
-        stats["open"]
-    )
+    open_count = get_open_message_count()
 
-with c3:
-    st.metric(
-        "In Progress",
-        stats["in_progress"]
-    )
+    st.metric("Open Messages", open_count)
 
-with c4:
-    st.metric(
-        "Closed",
-        stats["closed"]
-    )
+    all_messages = get_all_messages()
 
-st.divider()
+    if not all_messages:
+        st.info("No messages yet.")
 
-# =====================================================
-# TABS
-# =====================================================
+    else:
 
-tab1, tab2 = st.tabs([
-    "Create Ticket",
-    "My Tickets"
-])
+        for msg in all_messages:
 
-# =====================================================
-# CREATE TICKET
-# =====================================================
-
-with tab1:
-
-    st.subheader(
-        "Open Support Ticket"
-    )
-
-    category = st.selectbox(
-        "Category",
-        get_contact_categories()
-    )
-
-    subject = st.text_input(
-        "Subject"
-    )
-
-    message = st.text_area(
-        "Describe your issue",
-        height=250
-    )
-
-    priority = st.selectbox(
-        "Priority",
-        [
-            "Low",
-            "Medium",
-            "High",
-            "Urgent"
-        ]
-    )
-
-    if st.button(
-        "Submit Ticket"
-    ):
-
-        if not subject.strip():
-
-            st.error(
-                "Subject required."
+            status_color = (
+                "🟡" if msg["status"] == "open"
+                else "🟢" if msg["status"] == "resolved"
+                else "🔴"
             )
 
-        elif not message.strip():
+            with st.expander(
+                f"{status_color} [{msg['status'].upper()}] "
+                f"{msg['subject']} — from {msg['sender_name']}"
+            ):
 
-            st.error(
-                "Message required."
-            )
+                st.markdown(f"**From:** {msg['sender_name']}")
+                st.markdown(f"**Subject:** {msg['subject']}")
+                st.markdown(f"**Sent:** {msg['created_at']}")
+                st.divider()
+                st.write(msg["message"])
+                st.divider()
 
-        else:
+                col1, col2 = st.columns(2)
 
-            full_message = f"""
-Category: {category}
+                with col1:
+                    if st.button(
+                        "✅ Mark Resolved",
+                        key=f"resolve_{msg['id']}"
+                    ):
+                        update_message_status(
+                            msg["id"],
+                            "resolved"
+                        )
+                        st.success("Marked as resolved.")
+                        st.rerun()
 
-Priority: {priority}
+                with col2:
+                    if st.button(
+                        "🔴 Mark Closed",
+                        key=f"close_{msg['id']}"
+                    ):
+                        update_message_status(
+                            msg["id"],
+                            "closed"
+                        )
+                        st.success("Marked as closed.")
+                        st.rerun()
 
-Message:
-
-{message}
-"""
-
-            ticket_id = create_contact_message(
-                sender_id=st.session_state.user_id,
-                subject=subject,
-                message=full_message
-            )
-
-            st.success(
-                f"""
-Support ticket submitted.
-
-Ticket ID:
-{ticket_id}
-
-The Continuity Team will review
-your request.
-"""
-            )
-
-            st.balloons()
-
-# =====================================================
-# MY TICKETS
-# =====================================================
-
-with tab2:
-
-    st.subheader(
-        "My Support Tickets"
-    )
-
-    tickets = get_user_messages(
-        st.session_state.user_id
-    )
-
-    if not tickets:
-
-        st.info(
-            "No tickets submitted."
-        )
-
-    for ticket in tickets:
-
-        status = ticket["status"]
-
-        if status == "open":
-            badge = "🟡 Open"
-
-        elif status == "in_progress":
-            badge = "🔵 In Progress"
-
-        else:
-            badge = "🟢 Closed"
-
-        st.markdown(f"""
-### Ticket #{ticket['id']}
-
-Subject:
-{ticket['subject']}
-
-Status:
-{badge}
-""")
-
-        st.text_area(
-            "Ticket Content",
-            ticket["message"],
-            disabled=True,
-            key=f"ticket_{ticket['id']}"
-        )
-
-        st.divider()
+    st.divider()
 
 # =====================================================
-# CONTINUITY TEAM INFORMATION
+# SEND A MESSAGE
 # =====================================================
 
-st.divider()
+st.subheader("✉️ Send a Message")
 
-st.subheader(
-    "🏛 Continuity Management Team"
+subject = st.selectbox(
+    "Subject",
+    [
+        "Canon / Lore Question",
+        "Work Submission Query",
+        "Copyright Concern",
+        "Collaboration Request",
+        "Technical Issue",
+        "General Feedback",
+        "Other"
+    ]
 )
 
-st.markdown("""
-The Continuity Management Team oversees:
+message = st.text_area(
+    "Your Message",
+    height=200,
+    placeholder="Describe your question or concern in detail..."
+)
 
-- Canon continuity
-- Moderation reviews
-- Copyright disputes
-- User support
-- Community governance
-- Wiki maintenance
-- Timeline consistency
-- Shared universe integrity
+if st.button("📨 Send Message"):
 
-Response times vary depending on
-ticket volume and complexity.
-""")
+    if not message.strip():
+        st.error("Please write a message before sending.")
+
+    else:
+
+        success = submit_message(
+            sender_id=st.session_state.user_id,
+            subject=subject,
+            message=message.strip()
+        )
+
+        if success:
+            st.success(
+                "Your message has been sent to the "
+                "Continuity Team. They will review it shortly."
+            )
+            st.balloons()
+
+        else:
+            st.error("Something went wrong. Please try again.")
+
+st.divider()
 
 # =====================================================
-# QUICK HELP
+# USER'S OWN MESSAGE HISTORY
 # =====================================================
 
-with st.expander(
-    "Frequently Asked Questions"
-):
+st.subheader("📁 My Previous Messages")
 
-    st.markdown("""
-### How do I appeal moderation?
+my_messages = get_user_messages(
+    st.session_state.user_id
+)
 
-Create a ticket using:
+if not my_messages:
+    st.info("You have not sent any messages yet.")
 
-**Moderation Appeal**
+else:
 
----
+    for msg in my_messages:
 
-### How do I report stolen content?
+        status_icon = (
+            "🟡" if msg["status"] == "open"
+            else "🟢" if msg["status"] == "resolved"
+            else "🔴"
+        )
 
-Create a ticket using:
-
-**Copyright Issue**
-
-and submit a copyright claim.
-
----
-
-### How do I request canon status?
-
-Create a ticket using:
-
-**Canon Review Request**
-
----
-
-### How do I report bugs?
-
-Use:
-
-**Bug Report**
-
-and provide steps to reproduce.
-""")
+        with st.expander(
+            f"{status_icon} {msg['subject']} "
+            f"— {msg['created_at']}"
+        ):
+            st.write(msg["message"])
+            st.caption(f"Status: {msg['status'].upper()}")
 
 # =====================================================
 # SIDEBAR
@@ -288,38 +185,30 @@ and provide steps to reproduce.
 
 with st.sidebar:
 
-    st.header(
-        "📨 Support Center"
-    )
-
-    st.write(
-        f"User: "
-        f"**{st.session_state.username}**"
-    )
-
-    st.divider()
+    st.header("📬 Contact")
 
     st.markdown("""
-### Available Services
+### Response Times
 
-- Technical Support
-- Copyright Support
-- Canon Reviews
-- Moderation Appeals
-- Account Recovery
-- Content Reports
-- Continuity Questions
+🟢 **Canon Questions**
+Usually within 48 hours.
 
-### Support Workflow
+🟡 **Submission Queries**
+Within 3–5 working days.
 
-Submit Ticket
-↓
-Team Review
-↓
-Investigation
-↓
-Resolution
-""")
+🔴 **Urgent Issues**
+Flag as Copyright Concern
+for priority handling.
+
+---
+
+### Tips
+
+- Be as specific as possible
+- Reference story or character names
+- Include chapter or scene details
+if relevant
+    """)
 
 # =====================================================
 # FOOTER

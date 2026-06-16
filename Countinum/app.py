@@ -1,10 +1,11 @@
 import streamlit as st
 
-from database.schema import initialize_database
-from auth.register import register_user
+import database.schema
+import auth.register
 from auth.login import authenticate_user
 
-initialize_database()
+# ✅ FIX 1: Initialize the database and create all tables on startup
+database.schema.create_tables()
 
 st.set_page_config(
     page_title="Empire of Continuum",
@@ -123,7 +124,7 @@ if not st.session_state.logged_in:
 
             else:
 
-                success, message = register_user(
+                success, message = auth.register.register_user(
                     username,
                     email,
                     password
